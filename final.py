@@ -25,48 +25,15 @@ from sklearn import preprocessing, svm
 
 
 
-#Data = pd.read_excel('DiabetesDataSet.xlsx')
-
-def create_dataset2(num):
-    import random
-    mList = []
-
-    
-    for i in range(1,num+1):
-        food=random.randint(1,10)
-        sport=random.randint(1,10)
-        feelings=random.randint(1,10)
-        medical=random.randint(1,10)
-        thirsty=random.randint(1,10)
-        pee=random.randint(1,10)
-        smoking=random.randint(0, 10)
-        sick=0
-        if(smoking == 1 and food <= 5):
-            sick = 1
-        elif(smoking > 7  and sport > 6):
-            sick = 0
-        elif(smoking == 0 and food < 5 and sport < 5):
-            sick = 1 
-        elif(medical > 5 and (feelings < 5 or sport < 4)):
-            sick = 1  
-        elif(sport < 8 and (food < 7 or smoking > 2)):
-            sick = 1 
-        elif(feelings < 5 and (food < 5 or smoking > 5)):
-            sick = 1      
-        mList = mList + [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
-        
-
-    df = pd.DataFrame(mList)
-    return df
 
 
 
-def mPFunction(num, a):
+def mPFunction(num, a):   #calculate the function of the possibility (e^(-(num - a)^2))
     import math 
     x = -pow((num - a), 2)
     return math.exp(x)
 
-def getPss():  #get the posibilities of healthy and sick people
+def getPss():  #get the posibilities lists of healthy and sick people
     Pss = []
     PsH = []
     PsS = []
@@ -97,16 +64,16 @@ def getPss():  #get the posibilities of healthy and sick people
     return PsH, PsS
         
 
-def getRandomNumber(Ps):
+def getRandomNumber(Ps):   #given the probabilities list, generate a random number between 1-10
     import numpy as np
     flag = 1;
     psSum = 0
     fIndex = 1
-    Pss = Ps
+    Pss = Ps.copy()
     Pss.reverse()
     psSum = Pss.pop()
     feature = np.random.uniform()
-    while(flag or (fIndex < 11)):
+    while(flag or (fIndex < 10)):
         if(feature > psSum):
             temp = Pss.pop()
             fIndex += 1
@@ -114,21 +81,9 @@ def getRandomNumber(Ps):
         elif(feature <= psSum):
             return fIndex
     
-
-def createDataSetPs(PsH, PsS, num):
-    import numpy as np
-    
-    for i in range(num):
-        food = getRandomNumber(PsH)
-        sport= getRandomNumber(PsH)
-        feelings= getRandomNumber(PsH)
-        medical= getRandomNumber(PsH)
-        thirsty= getRandomNumber(PsH)
-        pee= getRandomNumber(PsH)
-        smoking= getRandomNumber(PsH)
     
     
-def createDataSetPs(PsH):    #Generate numbers from 1-10 and assign them to the features using the possibility function psH
+def createDataSetPs(PsH):    #Generate numbers from 1-10 and assign them to the features using the possibility function psH 
     food = getRandomNumber(PsH)
     sport= getRandomNumber(PsH)
     feelings= getRandomNumber(PsH)
@@ -140,83 +95,58 @@ def createDataSetPs(PsH):    #Generate numbers from 1-10 and assign them to the 
     return food, sport, feelings, medical, thirsty, pee, smoking
         
         
-def create_dataset_RDfeatures(pRD, a):
-    import numpy as np
-    food=np.random.choice(a, p = pRD)
-    sport=np.random.choice(a, p = pRD)
-    feelings=np.random.choice(a, p = pRD)
-    medical=np.random.choice(a, p = pRD)
-    thirsty=np.random.choice(a, p = pRD)
-    pee=np.random.choice(a, p = pRD)
-    smoking=np.random.choice(a, p = pRD)
-        
-    return food, sport, feelings, medical, thirsty, pee, smoking
-    
 
-def createe_dataset(users):
-    import numpy as np
+
+
+def createe_dataset(psh, pss, users):  #given probabilities lists of sick and healthy people, create a dataSet of 30 days per user, returns (users * 30) days
     import random
     mList = []
-    a = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    p_regular = np.array([0.05, 0.08, 0.09, 0.1, 0.1, 0.16000000000000003, 0.2, 0.1, 0.1, 0.02])
-    pRD_high = np.array([0.02, 0.02, 0.02, 0.02, 0.2, 0.22, 0.2, 0.1, 0.1, 0.1])   #P's for the Random Days
-    pRD_low = np.array([0.15, 0.11, 0.2, 0.2, 0.2, 0.04, 0.03, 0.03, 0.02, 0.02])   #P's for the Random Days for features that the max is the worst
-    ps = [p_regular, pRD_high, pRD_low]
-    features_p = {'food': 2, 'sport': 2, 'feelings': 2, 'medical': 1, 'thirsty': 1, 'pee': 1, 'smoking': 1}
+    mList2 = []    
     
-    features = ['food', 'sport', 'feelings', 'medical', 'thirsty', 'pee', 'smoking']  
+
     feature_list = [['food', 'sport'], ['food', 'smoking'], ['food'], ['smoking'], ['thirsty', 'food'], ['pee'], ['thirsty'], ['feelings', 'pee','food'], ['smoking', 'sport']]
     
-    mList2 = []    
     for i in range(users):    
-
     
         Diabetes = random.randint(0,1)
         if(Diabetes == 1):
             randomDays = random.randint(15,22)
             for i in range(1,randomDays):
-                food, sport, feelings, medical, thirsty, pee, smoking = create_dataset_RDfeatures(p_regular, a)
+                food, sport, feelings, medical, thirsty, pee, smoking = createDataSetPs(psh)
                 sick=0 
                 mList2 = mList2 + [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
             
             random_features = random.choice(feature_list)
             for i in range(randomDays, 31):
-                food, sport, feelings, medical, thirsty, pee, smoking = create_dataset_RDfeatures(p_regular, a)
+                food, sport, feelings, medical, thirsty, pee, smoking = createDataSetPs(psh)
                 sick=1 
                 ftrs = [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
+    
                 for item in random_features:
                     temp = item
-                    ftrs[0][temp.capitalize()] = np.random.choice(a, p = ps[features_p[item]])
-    
+                    ftrs[0][temp.capitalize()] = getRandomNumber(pss)
+                    
                 mList2 = mList2 + ftrs
                 
         else:
             for i in range(1, 31):
-                food, sport, feelings, medical, thirsty, pee, smoking = create_dataset_RDfeatures(p_regular, a)
+                food, sport, feelings, medical, thirsty, pee, smoking = createDataSetPs(psh)
                 sick=0 
                 mList2 = mList2 + [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
             
     
-    
-     
-    # seq = 0
-    # for row in mList2:    
-    #     if(row['Food'] > 5):
-    #         seq = seq+1
-    #         if (seq == 4):
-    #             row['Diabetes'] = 1
-    #df = pd.DataFrame(mList)
     mList = mList + mList2
     return mList    
 
 
-
+                        #Step 1 - Creating the dataSet
+num = 1000
 PsS = []
 PsH = []
-PsH, PsS = createMyDataP()
+PsH, PsS = getPss()
 
 
-mDataSet = createe_dataset(1000)
+mDataSet = createe_dataset(PsH, PsS, 100)
 
 
 
@@ -224,7 +154,7 @@ mDataSet = pd.DataFrame(mDataSet)
 
 mDataSet.to_csv (r'C:\Users\Jeries\Desktop\export_dataframe_v5.csv', index = False, header=True)
 
-                #Normalizing the data
+                        #Step 2 - Normalizing the data
 Xtest = mDataSet.values
 min_max_scaler = preprocessing.MinMaxScaler()
 data_scaled = min_max_scaler.fit_transform(Xtest)
@@ -232,14 +162,16 @@ mDataSet = pd.DataFrame(data_scaled)
 
   
 
-
+                #Step 3 - Divide the data into X and Y (Features and Label)
 X = mDataSet.iloc[:, 0:7].values
 Y = mDataSet.iloc[:, 7:8].values
+
+
 
 X = mDataSet[['Food', 'Sport', 'Medical', 'Feelings', 'Smoking', 'Thirsty', 'Pee']]
 Y = mDataSet[['Diabetes']]
 Y = np.reshape(Y, (num))
-#Y= mDataSet[:, 5]
+
 
 X = X.to_numpy()
 X = np.reshape(X, (540, 1, 7))
@@ -264,7 +196,7 @@ mData = pd.read_csv("C:\\Users\\Jeries\\Desktop\\FinalProject\\mData.csv")
 
 
 mDataSet = mData  
-
+                #Step 4 - Reshape the Data for the model
 mData = mDataSet
 
 xs = []
@@ -281,12 +213,12 @@ ys = np.array(ys)
 X = xs
 Y = ys
 
-#split dataset
+            #Step 5 - Split the dataset
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size= 0.2)
 
 
 
-#create model combining LSTM with 1D Convonutional layer and MaxPool layer
+    #Create model combining LSTM with 1D Convonutional layer and MaxPool layer
 
 lstm_out = 128
 
@@ -303,8 +235,8 @@ model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy']
 print(model.summary())
 
 
-plt.scatter(range(5994), y_pred, c='g')
-plt.scatter(range(5994), Y_test, c='r')
+plt.scatter(range(594), y_pred, c='g')
+plt.scatter(range(594), Y_test, c='r')
 plt.show()
 
 

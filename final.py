@@ -153,7 +153,7 @@ def create_dataset_RDfeatures(pRD, a):
     return food, sport, feelings, medical, thirsty, pee, smoking
     
 
-def createe_dataset(users):
+def createe_dataset2(users):
     import numpy as np
     import random
     mList = []
@@ -211,9 +211,57 @@ def createe_dataset(users):
 
 
 
+
+
+def createe_dataset(psh, pss, users):
+    import numpy as np
+    import random
+    mList = []
+  
+    mList2 = []    
+    for i in range(users):    
+
+    
+        Diabetes = random.randint(0,1)
+        if(Diabetes == 1):
+            randomDays = random.randint(15,22)
+            for i in range(1,randomDays):
+                food, sport, feelings, medical, thirsty, pee, smoking = createDataSetPs(psh)
+                sick=0 
+                mList2 = mList2 + [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
+            
+            for i in range(randomDays, 31):
+                food, sport, feelings, medical, thirsty, pee, smoking = createDataSetPs(pss)
+                sick=1 
+                ftrs = [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
+    
+                mList2 = mList2 + ftrs
+                
+        else:
+            for i in range(1, 31):
+                food, sport, feelings, medical, thirsty, pee, smoking = createDataSetPs(psh)
+                sick=0 
+                mList2 = mList2 + [{'Food' : food, 'Sport' : sport, 'Feelings' : feelings, 'Medical' : medical, 'Smoking' : smoking, 'Thirsty' : thirsty, 'Pee' : pee,'Diabetes' : sick}]
+            
+    
+    
+     
+    # seq = 0
+    # for row in mList2:    
+    #     if(row['Food'] > 5):
+    #         seq = seq+1
+    #         if (seq == 4):
+    #             row['Diabetes'] = 1
+    #df = pd.DataFrame(mList)
+    mList = mList + mList2
+    return mList    
+
+
+
+num = 1000
 PsS = []
 PsH = []
-PsH, PsS = createMyDataP()
+PsH, PsS = getPss()
 
 
 mDataSet = createe_dataset(1000)

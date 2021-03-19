@@ -97,7 +97,7 @@ def getPss():  #get the posibilities of healthy and sick people
     return PsH, PsS
         
 
-def randomNumber(Ps):
+def getRandomNumber(Ps):
     import numpy as np
     flag = 1;
     psSum = 0

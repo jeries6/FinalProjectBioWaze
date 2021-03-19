@@ -97,7 +97,7 @@ def getPss():  #get the posibilities of healthy and sick people
     return PsH, PsS
         
 
-def randomNumber(Ps):
+def getRandomNumber(Ps):
     import numpy as np
     flag = 1;
     psSum = 0
@@ -119,15 +119,27 @@ def createDataSetPs(PsH, PsS, num):
     import numpy as np
     
     for i in range(num):
-        food=np.random.uniform()
-        sport=np.random.uniform()
-        feelings=np.random.uniform()
-        medical=np.random.uniform()
-        thirsty=np.random.uniform()
-        pee=np.random.uniform()
-        smoking=np.random.uniform()
+        food = getRandomNumber(PsH)
+        sport= getRandomNumber(PsH)
+        feelings= getRandomNumber(PsH)
+        medical= getRandomNumber(PsH)
+        thirsty= getRandomNumber(PsH)
+        pee= getRandomNumber(PsH)
+        smoking= getRandomNumber(PsH)
     
-
+    
+def createDataSetPs(PsH):    #Generate numbers from 1-10 and assign them to the features using the possibility function psH
+    food = getRandomNumber(PsH)
+    sport= getRandomNumber(PsH)
+    feelings= getRandomNumber(PsH)
+    medical= getRandomNumber(PsH)
+    thirsty= getRandomNumber(PsH)
+    pee= getRandomNumber(PsH)
+    smoking= getRandomNumber(PsH)
+    
+    return food, sport, feelings, medical, thirsty, pee, smoking
+        
+        
 def create_dataset_RDfeatures(pRD, a):
     import numpy as np
     food=np.random.choice(a, p = pRD)

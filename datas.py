@@ -12,9 +12,10 @@ class DataSim:
     
     
     
-    def mPFunction(self, num, a):   #calculate the function of the possibility (e^(-(num - a)^2))
+    def mPFunction(self, num, a, alpha):   #calculate the function of the possibility (e^(-(num - a)^2))
         import math 
         x = -pow((num - a), 2)
+        x = x/alpha
         return math.exp(x)
     
     def getPss(self):  #get the posibilities lists of healthy and sick people
@@ -22,7 +23,7 @@ class DataSim:
         PsH = []
         PsS = []
         for i in range(10):
-            y = self.mPFunction(i+1, 3)
+            y = self.mPFunction(i+1, 4, 7)
             Pss.append(y)
         
         Pss.reverse()
@@ -34,7 +35,7 @@ class DataSim:
             
         Pss = []    
         for i in range(10):
-            Pss.append(self.mPFunction(i+1, 7))
+            Pss.append(self.mPFunction(i+1, 6, 4))
         
         Pss.reverse()
         PssSum = sum(Pss)    
@@ -94,7 +95,7 @@ class DataSim:
         
             Diabetes = random.randint(0,1)
             if(Diabetes == 1):
-                randomDays = random.randint(15,22)
+                randomDays = random.randint(0,23)
                 for i in range(1,randomDays):
                     food, sport, feelings, medical, thirsty, pee, smoking = self.createDataSetPs(psh)
                     sick=0 

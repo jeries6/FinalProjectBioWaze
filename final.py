@@ -28,20 +28,19 @@ from datas import DataSim
 
 
 
-
                         #Step 1 - Creating the dataSet
 datas = DataSim()                        
-num = 1000
+num = 20000
 PsS = []
 PsH = []
 PsH, PsS = datas.getPss()
 
 
-mDataSet = datas.createe_dataset(PsH, PsS, 100)
-
-
-
+mDataSet = datas.createe_dataset(PsH, PsS, num)
 mDataSet = pd.DataFrame(mDataSet)
+
+
+mDataSet = pd.read_csv('mDataSet.csv')
 
 mDataSet.to_csv (r'C:\Users\Jeries\Desktop\export_dataframe_v5.csv', index = False, header=True)
 
@@ -105,7 +104,7 @@ X = xs
 Y = ys
 
             #Step 5 - Split the dataset
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size= 0.2)
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size= 0.25, random_state=42)
 
 
 
@@ -116,28 +115,71 @@ lstm_out = 128
 model = Sequential()
 model.add(Conv1D(filters=64, kernel_size=5, activation='relu', padding='causal'))
 model.add(MaxPooling1D(pool_size=1))
-model.add(Dropout(0.2))
+model.add(Dropout(0.25))
 model.add(LSTM(units=lstm_out, return_sequences=True))
 model.add(Dropout(0.2))
+model.add(LSTM(units=64, return_sequences=True))
+model.add(Dropout(0.25))
 model.add(LSTM(units=32))
-model.add(Dropout(0.2))
+model.add(Dropout(0.25))
 model.add(Dense(1, activation='sigmoid'))
 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 print(model.summary())
 
 
-plt.scatter(range(594), y_pred, c='g')
-plt.scatter(range(594), Y_test, c='r')
+plt.scatter(range(59994), y_pred, c='g')
+plt.scatter(range(59994), Y_test, c='r')
 plt.show()
 
 
 #fit model
 batch_size = 30
-model.fit(X_train, Y_train, epochs=10, verbose=1, batch_size=batch_size, shuffle=False)
+history = model.fit(X_train, Y_train, validation_split = 0.1, epochs=5, verbose=1, batch_size=batch_size, shuffle=False)
+
+
+            #Plotting the training and validation accuracy and loss at each epoch
+            
+            
+                #loss
+
+loss = history.history['loss']
+val_loss = history.history['val_loss']
+epochs = range(1, len(loss) + 1)
+plt.plot(epochs, loss, 'y', label='Training loss')
+plt.plot(epochs, val_loss, 'r', label='Validation loss')
+plt.title('Training and Validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+
+
+                #accuracy
+            
+acc = history.history['accuracy']
+val_acc = history.history['val_accuracy']
+plt.plot(epochs, acc, 'y', label='Training accuracy')
+plt.plot(epochs, val_acc, 'r', label='Validation acc')
+plt.title('Training and Validation accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+plt.show()
+
+
+
+
 
 #analyze the results
 score, acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size=batch_size)
 y_pred = model.predict(X_test)
+
+
+cm = confusion_matrix(Y_test, y_pred)
+
+
+
 
 model.save('CnnLstm.h5')
 

@@ -30,7 +30,7 @@ from datas import DataSim
 
                         #Step 1 - Creating the dataSet
 datas = DataSim()                        
-num = 20000
+num = 200
 PsS = []
 PsH = []
 PsH, PsS = datas.getPss()
@@ -134,7 +134,7 @@ plt.show()
 
 #fit model
 batch_size = 30
-history = model.fit(X_train, Y_train, validation_split = 0.1, epochs=5, verbose=1, batch_size=batch_size, shuffle=False)
+history = model.fit(X_train, Y_train, validation_split = 0.1, epochs=2, verbose=1, batch_size=batch_size, shuffle=False)
 
 
             #Plotting the training and validation accuracy and loss at each epoch

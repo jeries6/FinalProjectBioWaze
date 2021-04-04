@@ -12,6 +12,7 @@ Created on Fri Mar 26 20:45:16 2021
 # Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
+import concurrent
 import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -20,18 +21,16 @@ from model_controller import DataModel
 from PyQt5.QtCore import QThread, pyqtSignal, QObject
 import time
 
+global gHistory
+
+gHistory = [None]
 
 
-global que
-
-que = [None]
 class TrainingThread(QThread):
     Result = None
     change_value = pyqtSignal(int)
     finished = pyqtSignal()
-    
 
-    
     def run(self):
         num = 100
         split_size = 0.25
@@ -47,41 +46,39 @@ class TrainingThread(QThread):
             self.change_value.emit(i)
             time.sleep(0.05)
         mDataSet = controller.createDataSet(num)
-        counter=10
-        while(counter<25):
+        counter = 10
+        while (counter < 25):
             self.change_value.emit(counter)
             time.sleep(0.04)
             counter += 1
         mDataSet = controller.normalize_data(mDataSet)
-        while(counter<32):
+        while (counter < 32):
             self.change_value.emit(counter)
             time.sleep(0.04)
             counter += 1
         X, Y = controller.reshape_data(mDataSet)
-        while(counter<55):
+        while (counter < 55):
             self.change_value.emit(counter)
             time.sleep(0.05)
             counter += 1
-        X_train, X_test, Y_train, Y_test = controller.split_data(X,Y,split_size)
+        X_train, X_test, Y_train, Y_test = controller.split_data(X, Y, split_size)
         model = controller.create_cnnLstm_model(blocks, filters, pool_size, kernel, dropout)
-        while(counter<70):
+        while (counter < 70):
             self.change_value.emit(counter)
             time.sleep(0.04)
             counter += 1
         history = controller.train_cnn_lstm(model, X_train, Y_train, epochs, batch_size)
-        while(counter<101):
+        while (counter < 101):
             self.change_value.emit(counter)
             time.sleep(0.05)
             counter += 1
-        #self.Result[0] = history
-        que[0] = history
+        # self.Result[0] = history
+        gHistory[0] = history
         self.finished.emit()
-        
-    
+
 
 class Ui_MainWindow(QWidget):
-    
-    resultt = [None]
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1020, 796)
@@ -312,20 +309,56 @@ class Ui_MainWindow(QWidget):
 
     def train_model_button(self):
         result = [None]
-        self.thread = TrainingThread()
-        self.thread.change_value.connect(self.setProgressBar)
-        self.thread.finished.connect(self.getModelHistory)
-        
-        self.thread.start()
-        
+        #self.thread = TrainingThread()
+        #self.thread.change_value.connect(self.setProgressBar)
+        #self.thread.finished.connect(self.getModelHistory)
+
+        #self.thread.start()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+
+            f1 = executor.submit(self.workerThread, 10, self.splitSlider.value(), int(self.lstmBlocksEdit.text()), int(self.cnnFiltersEdit.text()), int(self.poolingSizeEdit.text()), int(self.cnnKernelEdit.text()), float(self.dropoutEdit.text()), 3, 30)
+
+    def workerThread(self, num, split_size, blocks, filters, pool_size, kernel, dropout, epochs, batch_size):
+        print(num,split_size, blocks, filters, pool_size, kernel, dropout, epochs, batch_size)
+        controller = DataModel()
+        for i in range(10):
+            self.setProgressBar(i)
+            time.sleep(0.05)
+        mDataSet = controller.createDataSet(num)
+        counter = 10
+        while (counter < 25):
+            self.setProgressBar(counter)
+            time.sleep(0.04)
+            counter += 1
+        mDataSet = controller.normalize_data(mDataSet)
+        while (counter < 32):
+            self.setProgressBar(counter)
+            time.sleep(0.04)
+            counter += 1
+        X, Y = controller.reshape_data(mDataSet)
+        while (counter < 55):
+            self.setProgressBar(counter)
+            time.sleep(0.05)
+            counter += 1
+        X_train, X_test, Y_train, Y_test = controller.split_data(X, Y, split_size)
+        model = controller.create_cnnLstm_model(blocks, filters, pool_size, kernel, dropout)
+        while (counter < 70):
+            self.setProgressBar(counter)
+            time.sleep(0.04)
+            counter += 1
+        history = controller.train_cnn_lstm(model, X_train, Y_train, epochs, batch_size)
+        while (counter < 101):
+            self.setProgressBar(counter)
+            time.sleep(0.05)
+            counter += 1
+        return history
+
     def setProgressBar(self, val):
         self.trainingProgressBar.setValue(val)
 
-
     def getModelHistory(self):
-        print(que[0])
-        print("lool")
-    
+        pass
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -370,23 +403,20 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-    
-    
 
-        
-        
-        
-class Worker(QObject):
-    Result = None
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-    
-    def run(self):
-        """Long-running task."""
-        pass
-        for i in range(5):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
-        
+# =============================================================================
+# class Worker(QObject):
+#     Result = None
+#     finished = pyqtSignal()
+#     progress = pyqtSignal(int)
+#
+#     def run(self):
+#         """Long-running task."""
+#         pass
+#         for i in range(5):
+#             sleep(1)
+#             self.progress.emit(i + 1)
+#         self.finished.emit()
+#
+# =============================================================================
 

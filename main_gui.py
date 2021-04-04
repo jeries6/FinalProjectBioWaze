@@ -12,6 +12,7 @@ Created on Fri Mar 26 20:45:16 2021
 # Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
+import concurrent
 import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -21,17 +22,16 @@ from PyQt5.QtCore import QThread, pyqtSignal, QObject
 import time
 
 
+global gHistory
 
-global que
-
-que = [None]
+gHistory = [None]
+    
+    
 class TrainingThread(QThread):
     Result = None
     change_value = pyqtSignal(int)
     finished = pyqtSignal()
-    
 
-    
     def run(self):
         num = 100
         split_size = 0.25
@@ -47,41 +47,39 @@ class TrainingThread(QThread):
             self.change_value.emit(i)
             time.sleep(0.05)
         mDataSet = controller.createDataSet(num)
-        counter=10
-        while(counter<25):
+        counter = 10
+        while (counter < 25):
             self.change_value.emit(counter)
             time.sleep(0.04)
             counter += 1
         mDataSet = controller.normalize_data(mDataSet)
-        while(counter<32):
+        while (counter < 32):
             self.change_value.emit(counter)
             time.sleep(0.04)
             counter += 1
         X, Y = controller.reshape_data(mDataSet)
-        while(counter<55):
+        while (counter < 55):
             self.change_value.emit(counter)
             time.sleep(0.05)
             counter += 1
-        X_train, X_test, Y_train, Y_test = controller.split_data(X,Y,split_size)
+        X_train, X_test, Y_train, Y_test = controller.split_data(X, Y, split_size)
         model = controller.create_cnnLstm_model(blocks, filters, pool_size, kernel, dropout)
-        while(counter<70):
+        while (counter < 70):
             self.change_value.emit(counter)
             time.sleep(0.04)
             counter += 1
         history = controller.train_cnn_lstm(model, X_train, Y_train, epochs, batch_size)
-        while(counter<101):
+        while (counter < 101):
             self.change_value.emit(counter)
             time.sleep(0.05)
             counter += 1
-        #self.Result[0] = history
-        que[0] = history
+        # self.Result[0] = history
+        gHistory[0] = history
         self.finished.emit()
-        
-    
+
 
 class Ui_MainWindow(QWidget):
-    
-    resultt = [None]
+
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1020, 796)
@@ -143,9 +141,8 @@ class Ui_MainWindow(QWidget):
         self.verticalLayout_9.addWidget(self.dropoutEdit)
         self.horizontalLayout_4.addLayout(self.verticalLayout_9)
         self.widget_2 = QtWidgets.QWidget(self.centralwidget)
-        self.widget_2.setGeometry(QtCore.QRect(10, 270, 801, 80))
+        self.widget_2.setGeometry(QtCore.QRect(30, 370, 261, 80))
         self.widget_2.setObjectName("widget_2")
-        self.widget_2.setVisible(False)
         self.layoutWidget1 = QtWidgets.QWidget(self.widget_2)
         self.layoutWidget1.setGeometry(QtCore.QRect(30, 20, 216, 27))
         self.layoutWidget1.setObjectName("layoutWidget1")
@@ -159,9 +156,8 @@ class Ui_MainWindow(QWidget):
         self.nNeighborsEdit.setObjectName("nNeighborsEdit")
         self.horizontalLayout_6.addWidget(self.nNeighborsEdit)
         self.svmWidget = QtWidgets.QWidget(self.centralwidget)
-        self.svmWidget.setGeometry(QtCore.QRect(10, 270, 801, 80))
+        self.svmWidget.setGeometry(QtCore.QRect(350, 370, 501, 80))
         self.svmWidget.setObjectName("svmWidget")
-        self.svmWidget.setVisible(False)
         self.layoutWidget2 = QtWidgets.QWidget(self.svmWidget)
         self.layoutWidget2.setGeometry(QtCore.QRect(40, 20, 355, 54))
         self.layoutWidget2.setObjectName("layoutWidget2")
@@ -205,7 +201,6 @@ class Ui_MainWindow(QWidget):
         self.trainModelButton = QtWidgets.QPushButton(self.centralwidget)
         self.trainModelButton.setGeometry(QtCore.QRect(340, 490, 171, 51))
         self.trainModelButton.setObjectName("trainModelButton")
-        self.trainModelButton.clicked.connect(self.train_model_button)
         self.trainingProgressBar = QtWidgets.QProgressBar(self.centralwidget)
         self.trainingProgressBar.setGeometry(QtCore.QRect(130, 570, 701, 23))
         self.trainingProgressBar.setProperty("value", 0)
@@ -214,7 +209,7 @@ class Ui_MainWindow(QWidget):
         self.saveModelButton.setGeometry(QtCore.QRect(0, 730, 1021, 41))
         self.saveModelButton.setObjectName("saveModelButton")
         self.layoutWidget3 = QtWidgets.QWidget(self.centralwidget)
-        self.layoutWidget3.setGeometry(QtCore.QRect(40, 660, 197, 27))
+        self.layoutWidget3.setGeometry(QtCore.QRect(20, 630, 197, 73))
         self.layoutWidget3.setObjectName("layoutWidget3")
         self.horizontalLayout_8 = QtWidgets.QHBoxLayout(self.layoutWidget3)
         self.horizontalLayout_8.setContentsMargins(0, 0, 0, 0)
@@ -222,11 +217,12 @@ class Ui_MainWindow(QWidget):
         self.label_15 = QtWidgets.QLabel(self.layoutWidget3)
         self.label_15.setObjectName("label_15")
         self.horizontalLayout_8.addWidget(self.label_15)
-        self.accuracyEdit = QtWidgets.QLineEdit(self.layoutWidget3)
+        self.accuracyEdit = QtWidgets.QPlainTextEdit(self.layoutWidget3)
+        self.accuracyEdit.setReadOnly(True)
         self.accuracyEdit.setObjectName("accuracyEdit")
         self.horizontalLayout_8.addWidget(self.accuracyEdit)
         self.layoutWidget4 = QtWidgets.QWidget(self.centralwidget)
-        self.layoutWidget4.setGeometry(QtCore.QRect(20, 170, 89, 52))
+        self.layoutWidget4.setGeometry(QtCore.QRect(30, 140, 89, 52))
         self.layoutWidget4.setObjectName("layoutWidget4")
         self.verticalLayout_10 = QtWidgets.QVBoxLayout(self.layoutWidget4)
         self.verticalLayout_10.setContentsMargins(0, 0, 0, 0)
@@ -239,13 +235,28 @@ class Ui_MainWindow(QWidget):
         self.modelComboBox.addItem("")
         self.modelComboBox.addItem("")
         self.modelComboBox.addItem("")
-        self.modelComboBox.currentIndexChanged.connect(self.modelSelectionChanged)
         self.verticalLayout_10.addWidget(self.modelComboBox)
         self.layoutWidget5 = QtWidgets.QWidget(self.centralwidget)
-        self.layoutWidget5.setGeometry(QtCore.QRect(250, 20, 160, 51))
+        self.layoutWidget5.setGeometry(QtCore.QRect(20, 20, 961, 91))
         self.layoutWidget5.setObjectName("layoutWidget5")
-        self.verticalLayout_11 = QtWidgets.QVBoxLayout(self.layoutWidget5)
-        self.verticalLayout_11.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.layoutWidget5)
+        self.horizontalLayout.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.verticalLayout_12 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_12.setObjectName("verticalLayout_12")
+        self.label = QtWidgets.QLabel(self.layoutWidget5)
+        self.label.setObjectName("label")
+        self.verticalLayout_12.addWidget(self.label)
+        self.browseButton = QtWidgets.QPushButton(self.layoutWidget5)
+        self.browseButton.setObjectName("browseButton")
+        self.verticalLayout_12.addWidget(self.browseButton)
+        self.dataLabel1 = QtWidgets.QLabel(self.layoutWidget5)
+        self.dataLabel1.setObjectName("dataLabel1")
+        self.verticalLayout_12.addWidget(self.dataLabel1)
+        self.horizontalLayout.addLayout(self.verticalLayout_12)
+        spacerItem = QtWidgets.QSpacerItem(100, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.verticalLayout_11 = QtWidgets.QVBoxLayout()
         self.verticalLayout_11.setObjectName("verticalLayout_11")
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
@@ -260,23 +271,53 @@ class Ui_MainWindow(QWidget):
         self.splitSlider.setProperty("value", 80)
         self.splitSlider.setOrientation(QtCore.Qt.Horizontal)
         self.splitSlider.setObjectName("splitSlider")
-        self.splitSlider.valueChanged.connect(self.splitSliderChanged)
         self.verticalLayout_11.addWidget(self.splitSlider)
+        self.horizontalLayout.addLayout(self.verticalLayout_11)
+        spacerItem1 = QtWidgets.QSpacerItem(250, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem1)
+        self.batchLabel = QtWidgets.QLabel(self.layoutWidget5)
+        self.batchLabel.setObjectName("batchLabel")
+        self.horizontalLayout.addWidget(self.batchLabel)
+        self.batchEdit = QtWidgets.QLineEdit(self.layoutWidget5)
+        self.batchEdit.setObjectName("batchEdit")
+        self.horizontalLayout.addWidget(self.batchEdit)
+        self.epochsLabel = QtWidgets.QLabel(self.layoutWidget5)
+        self.epochsLabel.setObjectName("epochsLabel")
+        self.horizontalLayout.addWidget(self.epochsLabel)
+        self.epochsEdit = QtWidgets.QLineEdit(self.layoutWidget5)
+        self.epochsEdit.setObjectName("epochsEdit")
+        self.horizontalLayout.addWidget(self.epochsEdit)
         self.layoutWidget6 = QtWidgets.QWidget(self.centralwidget)
-        self.layoutWidget6.setGeometry(QtCore.QRect(20, 30, 156, 79))
+        self.layoutWidget6.setGeometry(QtCore.QRect(270, 140, 521, 81))
         self.layoutWidget6.setObjectName("layoutWidget6")
-        self.verticalLayout_12 = QtWidgets.QVBoxLayout(self.layoutWidget6)
-        self.verticalLayout_12.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_12.setObjectName("verticalLayout_12")
-        self.label = QtWidgets.QLabel(self.layoutWidget6)
-        self.label.setObjectName("label")
-        self.verticalLayout_12.addWidget(self.label)
-        self.browseButton = QtWidgets.QPushButton(self.layoutWidget6)
-        self.browseButton.setObjectName("browseButton")
-        self.verticalLayout_12.addWidget(self.browseButton)
-        self.dataLabel1 = QtWidgets.QLabel(self.layoutWidget6)
-        self.dataLabel1.setObjectName("dataLabel1")
-        self.verticalLayout_12.addWidget(self.dataLabel1)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout(self.layoutWidget6)
+        self.horizontalLayout_2.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.groupBox = QtWidgets.QGroupBox(self.layoutWidget6)
+        self.groupBox.setObjectName("groupBox")
+        self.radioButton_3 = QtWidgets.QRadioButton(self.groupBox)
+        self.radioButton_3.setGeometry(QtCore.QRect(10, 20, 111, 20))
+        self.radioButton_3.setObjectName("radioButton_3")
+        self.radioButton_4 = QtWidgets.QRadioButton(self.groupBox)
+        self.radioButton_4.setGeometry(QtCore.QRect(10, 40, 91, 20))
+        self.radioButton_4.setObjectName("radioButton_4")
+        self.horizontalLayout_2.addWidget(self.groupBox)
+        self.usersNumWidg = QtWidgets.QWidget(self.layoutWidget6)
+        self.usersNumWidg.setMaximumSize(QtCore.QSize(16777215, 2000))
+        self.usersNumWidg.setObjectName("usersNumWidg")
+        self.layoutWidget7 = QtWidgets.QWidget(self.usersNumWidg)
+        self.layoutWidget7.setGeometry(QtCore.QRect(30, 20, 135, 46))
+        self.layoutWidget7.setObjectName("layoutWidget7")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget7)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.numLabel = QtWidgets.QLabel(self.layoutWidget7)
+        self.numLabel.setObjectName("numLabel")
+        self.verticalLayout.addWidget(self.numLabel)
+        self.usersNumEdit = QtWidgets.QLineEdit(self.layoutWidget7)
+        self.usersNumEdit.setObjectName("usersNumEdit")
+        self.verticalLayout.addWidget(self.usersNumEdit)
+        self.horizontalLayout_2.addWidget(self.usersNumWidg)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -287,6 +328,21 @@ class Ui_MainWindow(QWidget):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.browseButton.clicked.connect(self.browseButtonClick)
+        self.splitSlider.valueChanged.connect(self.splitSliderChanged)
+        self.modelComboBox.currentIndexChanged.connect(self.modelSelectionChanged)
+        self.trainModelButton.clicked.connect(self.train_model_button)
+        self.widget_2.setVisible(False)
+        self.svmWidget.setVisible(False)
+        self.usersNumWidg.setVisible(False)
+        self.radioButton_3.toggled.connect(self.dataSimRadio)
+        self.radioButton_4.toggled.connect(self.dataUpRadio)
+
+
+    def dataSimRadio(self):
+        self.usersNumWidg.setVisible(True)
+    
+    def dataUpRadio(self):
+        self.usersNumWidg.setVisible(False)
 
     def browseButtonClick(self):
         fname = QFileDialog.getOpenFileName(self, 'open file', '.')
@@ -312,20 +368,63 @@ class Ui_MainWindow(QWidget):
 
     def train_model_button(self):
         result = [None]
-        self.thread = TrainingThread()
-        self.thread.change_value.connect(self.setProgressBar)
-        self.thread.finished.connect(self.getModelHistory)
-        
-        self.thread.start()
-        
+        #self.thread = TrainingThread()
+        #self.thread.change_value.connect(self.setProgressBar)
+        #self.thread.finished.connect(self.getModelHistory)
+
+        #self.thread.start()
+
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            f1 = executor.submit(self.workerThread, int(self.usersNumEdit.text()), self.splitSlider.value(), int(self.lstmBlocksEdit.text()), int(self.cnnFiltersEdit.text()), int(self.poolingSizeEdit.text()), int(self.cnnKernelEdit.text()), float(self.dropoutEdit.text()), int(self.epochsEdit.text()), int(self.batchEdit.text()))
+            mHistory = f1.result()
+            nl = '\n'
+            acc = mHistory.history['accuracy'][1]
+            acc = "{:.5f}".format(acc)
+            loss = mHistory.history['loss'][1]
+            loss = "{:.5f}".format(loss)
+            plainText = f"Accuracy:{nl} {acc} {nl} Loss:{nl} {loss}"
+            self.accuracyEdit.appendPlainText(str(plainText))
+
+    def workerThread(self, num, split_size, blocks, filters, pool_size, kernel, dropout, epochs, batch_size):
+        print(num,split_size, blocks, filters, pool_size, kernel, dropout, epochs, batch_size)
+        controller = DataModel()
+        for i in range(10):
+            self.setProgressBar(i)
+            time.sleep(0.05)
+        mDataSet = controller.createDataSet(num)
+        counter = 10
+        while (counter < 25):
+            self.setProgressBar(counter)
+            time.sleep(0.04)
+            counter += 1
+        mDataSet = controller.normalize_data(mDataSet)
+        while (counter < 32):
+            self.setProgressBar(counter)
+            time.sleep(0.04)
+            counter += 1
+        X, Y = controller.reshape_data(mDataSet)
+        while (counter < 55):
+            self.setProgressBar(counter)
+            time.sleep(0.05)
+            counter += 1
+        X_train, X_test, Y_train, Y_test = controller.split_data(X, Y, split_size)
+        model = controller.create_cnnLstm_model(blocks, filters, pool_size, kernel, dropout)
+        while (counter < 70):
+            self.setProgressBar(counter)
+            time.sleep(0.04)
+            counter += 1
+        history = controller.train_cnn_lstm(model, X_train, Y_train, epochs, batch_size)
+        while (counter < 101):
+            self.setProgressBar(counter)
+            time.sleep(0.05)
+            counter += 1
+        return history
+
     def setProgressBar(self, val):
         self.trainingProgressBar.setValue(val)
 
-
     def getModelHistory(self):
-        print(que[0])
-        print("lool")
-    
+        pass
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -354,11 +453,17 @@ class Ui_MainWindow(QWidget):
         self.modelComboBox.setItemText(0, _translate("MainWindow", "CNN-LSTM"))
         self.modelComboBox.setItemText(1, _translate("MainWindow", "KNN"))
         self.modelComboBox.setItemText(2, _translate("MainWindow", "SVM"))
-        self.splitLabel.setText(_translate("MainWindow", "Train Data Split:"))
-        self.label_4.setText(_translate("MainWindow", "80%"))
         self.label.setText(_translate("MainWindow", "Select Data(CSV File):"))
         self.browseButton.setText(_translate("MainWindow", "Browse"))
         self.dataLabel1.setText(_translate("MainWindow", "No Data Yet."))
+        self.splitLabel.setText(_translate("MainWindow", "Train Data Split:"))
+        self.label_4.setText(_translate("MainWindow", "80%"))
+        self.batchLabel.setText(_translate("MainWindow", "Batch Size:"))
+        self.epochsLabel.setText(_translate("MainWindow", "#Epochs:"))
+        self.groupBox.setTitle(_translate("MainWindow", "Simulate/Upload Data"))
+        self.radioButton_3.setText(_translate("MainWindow", "Simulate Data"))
+        self.radioButton_4.setText(_translate("MainWindow", "Upload Data"))
+        self.numLabel.setText(_translate("MainWindow", "Number of users:"))
 
 
 if __name__ == "__main__":
@@ -370,23 +475,20 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-    
-    
 
-        
-        
-        
-class Worker(QObject):
-    Result = None
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-    
-    def run(self):
-        """Long-running task."""
-        pass
-        for i in range(5):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
-        
+# =============================================================================
+# class Worker(QObject):
+#     Result = None
+#     finished = pyqtSignal()
+#     progress = pyqtSignal(int)
+#
+#     def run(self):
+#         """Long-running task."""
+#         pass
+#         for i in range(5):
+#             sleep(1)
+#             self.progress.emit(i + 1)
+#         self.finished.emit()
+#
+# =============================================================================
 

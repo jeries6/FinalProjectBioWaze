@@ -16,15 +16,13 @@ import concurrent
 import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog, QDialog, QWidget
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QFileDialog, QDialog, QWidget, QMessageBox
 from model_controller import DataModel
 from PyQt5.QtCore import QThread, pyqtSignal, QObject
 import time
 
 
-global gHistory
-
-gHistory = [None]
     
     
 class TrainingThread(QThread):
@@ -83,6 +81,7 @@ class Ui_MainWindow(QWidget):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1020, 796)
+        MainWindow.setWindowIcon(QIcon(r'C:\Users\Jeries\Desktop\bioWaze\FinalProjectBioWaze\mIcon.png'))
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.cnnLstmWidget = QtWidgets.QWidget(self.centralwidget)
@@ -326,7 +325,10 @@ class Ui_MainWindow(QWidget):
         self.retranslateUi(MainWindow)
         self.modelComboBox.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
-
+        
+        self.controller = DataModel()
+        
+        self.saveModelButton.clicked.connect(self.saveModel)
         self.browseButton.clicked.connect(self.browseButtonClick)
         self.splitSlider.valueChanged.connect(self.splitSliderChanged)
         self.modelComboBox.currentIndexChanged.connect(self.modelSelectionChanged)
@@ -336,7 +338,28 @@ class Ui_MainWindow(QWidget):
         self.usersNumWidg.setVisible(False)
         self.radioButton_3.toggled.connect(self.dataSimRadio)
         self.radioButton_4.toggled.connect(self.dataUpRadio)
+        
+        #set default values
+        
+        self.cnnKernelEdit.setText('5')
+        self.cnnFiltersEdit.setText('4')
+        self.poolingSizeEdit.setText('1')
+        self.lstmBlocksEdit.setText('5')
+        self.dropoutEdit.setText('0.2')
+        self.batchEdit.setText('30')
 
+
+
+    def saveModel(self):
+        self.controller.save_model(self.model)
+        import os
+        cwd = os.getcwd()
+        msg = QMessageBox()
+        msg.setWindowTitle("Success!")
+        msg.setText(f"The Trained Model has been successfully saved to: {cwd}")
+        msg.setIcon(QMessageBox.Information)
+        
+        x = msg.exec_()
 
     def dataSimRadio(self):
         self.usersNumWidg.setVisible(True)
@@ -348,6 +371,7 @@ class Ui_MainWindow(QWidget):
         fname = QFileDialog.getOpenFileName(self, 'open file', '.')
         head, tail = os.path.split(fname[0])
         self.dataLabel1.setText(tail)
+        self.fileName = fname[0]
 
     def splitSliderChanged(self):
         self.label_4.setText(str(self.splitSlider.value()) + '%')
@@ -368,52 +392,91 @@ class Ui_MainWindow(QWidget):
 
     def train_model_button(self):
         result = [None]
-        #self.thread = TrainingThread()
-        #self.thread.change_value.connect(self.setProgressBar)
-        #self.thread.finished.connect(self.getModelHistory)
-
-        #self.thread.start()
-
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            f1 = executor.submit(self.workerThread, int(self.usersNumEdit.text()), self.splitSlider.value(), int(self.lstmBlocksEdit.text()), int(self.cnnFiltersEdit.text()), int(self.poolingSizeEdit.text()), int(self.cnnKernelEdit.text()), float(self.dropoutEdit.text()), int(self.epochsEdit.text()), int(self.batchEdit.text()))
-            mHistory = f1.result()
+        
+        if(str(self.modelComboBox.currentText()) == "CNN-LSTM"):
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                f1 = executor.submit(self.workerThread, int(self.usersNumEdit.text()), self.splitSlider.value(), int(self.lstmBlocksEdit.text()), int(self.cnnFiltersEdit.text()), int(self.poolingSizeEdit.text()), int(self.cnnKernelEdit.text()), float(self.dropoutEdit.text()), int(self.epochsEdit.text()), int(self.batchEdit.text()))
+                mHistory = f1.result()
+                nl = '\n'
+                acc = mHistory.history['accuracy'][-1]
+                acc = "{:.5f}".format(acc)
+                loss = mHistory.history['loss'][-1]
+                loss = "{:.5f}".format(loss)
+                plainText = f"Accuracy:{nl} {acc} {nl} Loss:{nl} {loss}"
+                self.accuracyEdit.appendPlainText(str(plainText))
+                
+        
+            
+        elif(str(self.modelComboBox.currentText()) == "KNN"):    
+            counter = 0
+            while (counter < 37):
+                self.setProgressBar(counter)
+                time.sleep(0.04)
+                counter += 1
+            KNNacc = self.controller.knn_model(self.fileName, int(self.nNeighborsEdit.text()))
+            while (counter < 101):
+                self.setProgressBar(counter)
+                time.sleep(0.04)
+                counter += 1
+            KNNacc = "{:.5f}".format(KNNacc)
             nl = '\n'
-            acc = mHistory.history['accuracy'][1]
-            acc = "{:.5f}".format(acc)
-            loss = mHistory.history['loss'][1]
-            loss = "{:.5f}".format(loss)
-            plainText = f"Accuracy:{nl} {acc} {nl} Loss:{nl} {loss}"
+            plainText = f"KNN-Accuracy:{nl} {KNNacc}"
             self.accuracyEdit.appendPlainText(str(plainText))
 
+        elif(self.modelComboBox.currentText() == "SVM"): 
+            counter = 0
+            while (counter < 43):
+                self.setProgressBar(counter)
+                time.sleep(0.04)
+                counter += 1
+            print(self.fileName, str(self.svmKernelCombo.currentText()), str(self.gammaCombo.currentText()), int(self.svmCEdit.text()))
+            SVMacc = self.controller.svm_model(self.fileName, str(self.svmKernelCombo.currentText()), str(self.gammaCombo.currentText()), int(self.svmCEdit.text()))
+            while (counter < 101):
+                self.setProgressBar(counter)
+                time.sleep(0.04)
+                counter += 1
+            SVMacc = "{:.5f}".format(SVMacc)
+            nl = '\n'
+            plainText = f"SVM-Accuracy:{nl} {SVMacc}"
+            self.accuracyEdit.appendPlainText(str(plainText))
+
+       
+        
+        
     def workerThread(self, num, split_size, blocks, filters, pool_size, kernel, dropout, epochs, batch_size):
         print(num,split_size, blocks, filters, pool_size, kernel, dropout, epochs, batch_size)
-        controller = DataModel()
+        #controller = DataModel()
         for i in range(10):
             self.setProgressBar(i)
             time.sleep(0.05)
-        mDataSet = controller.createDataSet(num)
+        mDataSet = self.controller.createDataSet(num)
+        newData = self.controller.convert_avg(mDataSet)
+        mDataSet.to_csv (r'C:\Users\Jeries\Desktop\bioWaze\FinalProjectBioWaze\SavedDataSets\DataSet.csv', index = False, header=True)
+        newData.to_csv (r'C:\Users\Jeries\Desktop\bioWaze\FinalProjectBioWaze\SavedDataSets\DataSet_Avg.csv', index = False, header=True)
+                
+  
         counter = 10
         while (counter < 25):
             self.setProgressBar(counter)
             time.sleep(0.04)
             counter += 1
-        mDataSet = controller.normalize_data(mDataSet)
+        mDataSet = self.controller.normalize_data(mDataSet)
         while (counter < 32):
             self.setProgressBar(counter)
             time.sleep(0.04)
             counter += 1
-        X, Y = controller.reshape_data(mDataSet)
+        X, Y = self.controller.reshape_data(mDataSet)
         while (counter < 55):
             self.setProgressBar(counter)
             time.sleep(0.05)
             counter += 1
-        X_train, X_test, Y_train, Y_test = controller.split_data(X, Y, split_size)
-        model = controller.create_cnnLstm_model(blocks, filters, pool_size, kernel, dropout)
+        X_train, X_test, Y_train, Y_test = self.controller.split_data(X, Y, split_size)
+        self.model = self.controller.create_cnnLstm_model(blocks, filters, pool_size, kernel, dropout)
         while (counter < 70):
             self.setProgressBar(counter)
             time.sleep(0.04)
             counter += 1
-        history = controller.train_cnn_lstm(model, X_train, Y_train, epochs, batch_size)
+        history = self.controller.train_cnn_lstm(self.model, X_train, Y_train, epochs, batch_size)
         while (counter < 101):
             self.setProgressBar(counter)
             time.sleep(0.05)
@@ -428,7 +491,7 @@ class Ui_MainWindow(QWidget):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Data Scientist"))
         self.label_6.setText(_translate("MainWindow", "CNN Kernel:"))
         self.label_7.setText(_translate("MainWindow", "CNN Filters:"))
         self.label_8.setText(_translate("MainWindow", "Pooling Size:"))
@@ -475,20 +538,4 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-
-# =============================================================================
-# class Worker(QObject):
-#     Result = None
-#     finished = pyqtSignal()
-#     progress = pyqtSignal(int)
-#
-#     def run(self):
-#         """Long-running task."""
-#         pass
-#         for i in range(5):
-#             sleep(1)
-#             self.progress.emit(i + 1)
-#         self.finished.emit()
-#
-# =============================================================================
 

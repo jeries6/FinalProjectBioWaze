@@ -94,6 +94,24 @@ class DataModel:
         return X,Y
     
     
+    def convert_data(self, mDataSet):
+        import pandas as pd
+        mData = mDataSet
+
+        xs = []
+        i = 0
+        while(i < len(mData) - 30):
+        
+            v = mData.iloc[i: (i+29)]
+            vSum = v.sum(axis=0)
+            vSum = vSum.tolist()
+            xs.append(vSum)
+            i = i+30
+        
+        newData = pd.DataFrame(xs)
+        return newData
+    
+    
                 #Step 5 - Split the dataset
     def split_data(self, x, y, size):
         X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size= size, random_state=42)
@@ -147,7 +165,8 @@ class DataModel:
 
     def plot_acc_epochs(self, history):
                 #accuracy
-            
+        loss = history.history['loss']        
+        epochs = range(1, len(loss) + 1)
         acc = history.history['accuracy']
         val_acc = history.history['val_accuracy']
         plt.plot(epochs, acc, 'y', label='Training accuracy')
@@ -171,7 +190,7 @@ class DataModel:
         y_pred = model.predict(X_test)   
         return y_pred
     
-    def analyze_results(self, X_test, Y_test, batch_size):
+    def analyze_results(self, X_test, Y_test, batch_size, model):
         #analyze the results
         score, acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size=batch_size)
         return score, acc
@@ -186,28 +205,41 @@ class DataModel:
         model.save('CnnLstm.h5')
 
 
-    def svm_model(self):
+    def svm_model(self, fName, mKernel, gamm, c):
 
-        diabetesData = pd.read_csv('diabetes.csv')
-        diabetes_Xtrain = diabetesData.iloc[:, 0:8]
-        diabetes_Ytrain = diabetesData.iloc[:, 8:9]
+        diabetesData = pd.read_csv(fName)
+        diabetes_Xtrain = diabetesData.iloc[:, 0:7]
+        diabetes_Ytrain = diabetesData.iloc[:, 7]
         
         diabetes_Xtrain, diabetes_Xtest, diabetes_Ytrain, diabetes_Ytest = train_test_split(diabetes_Xtrain, diabetes_Ytrain, test_size= 0.2)
         
-        SVMclassifier = svm.SVC(kernel = 'linear', gamma = 'auto', C=3)
+        SVMclassifier = svm.SVC(kernel = mKernel, gamma = gamm, C=c)
         SVMclassifier.fit(diabetes_Xtrain, diabetes_Ytrain)
         SVM_y_pred = SVMclassifier.predict(diabetes_Xtest)
         
         print(classification_report(diabetes_Ytest, SVM_y_pred))
+        print(confusion_matrix(diabetes_Ytest, SVM_y_pred))
+        from sklearn.metrics import accuracy_score
+        return accuracy_score(diabetes_Ytest, SVM_y_pred)
 
 
-    def knn_model(self):
+
+    def convert_avg(self, dataSet):
+        datas = DataSim() 
+        newData = datas.convert_data(dataSet)
+        Xtest = newData.values
+        min_max_scaler = preprocessing.MinMaxScaler()
+        data_scaled = min_max_scaler.fit_transform(Xtest)
+        newData = pd.DataFrame(data_scaled)
+        return newData
+
+    def knn_model(self, fName, n):
         
         from sklearn.preprocessing import StandardScaler
         
-        diabetesData = pd.read_csv('diabetes.csv')
-        diabetes_Xtrain = diabetesData.iloc[:, 0:8]
-        diabetes_Ytrain = diabetesData.iloc[:, 8:9]
+        diabetesData = pd.read_csv(fName)
+        diabetes_Xtrain = diabetesData.iloc[:, 0:7]
+        diabetes_Ytrain = diabetesData.iloc[:, 7]
         
         diabetes_Xtrain, diabetes_Xtest, diabetes_Ytrain, diabetes_Ytest = train_test_split(diabetes_Xtrain, diabetes_Ytrain, test_size= 0.2)
         
@@ -218,10 +250,13 @@ class DataModel:
         
         
         from sklearn.neighbors import KNeighborsClassifier
-        KNNClassifier = KNeighborsClassifier(n_neighbors=5)
+        from sklearn.metrics import accuracy_score
+        KNNClassifier = KNeighborsClassifier(n_neighbors=n)
         KNNClassifier.fit(diabetes_Xtrain, diabetes_Ytrain)
         
         
         KNN_y_pred = KNNClassifier.predict(diabetes_Xtest)
         print(classification_report(diabetes_Ytest, KNN_y_pred))
         print(confusion_matrix(diabetes_Ytest, KNN_y_pred))
+        
+        return accuracy_score(diabetes_Ytest, KNN_y_pred)
